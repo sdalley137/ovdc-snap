@@ -21,3 +21,16 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+# snapcraft-created directories and files
+parts/
+prime/
+stage/
+*.snap
+
+# Snapcraft global state tracking data(automatically generated)
+# https://forum.snapcraft.io/t/location-to-save-global-state/768
+/snap/.snapcraft/
+
+# Source archive packed by `snapcraft cleanbuild` before pushing to the LXD container
+/*_source.tar.bz2
