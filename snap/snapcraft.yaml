@@ -1,0 +1,84 @@
+name: ovdc # you probably want to 'snapcraft register <name>'
+base: core18 # the base snap is the execution environment for this snap
+version: '3.2.0-3-snap0.1' # just for humans, typically '1.2+git' or '1.3.2'
+summary: Oracle Virtual Sunray Desktop Client # 79 char long summary
+description: |
+  ovdc is Oracle's client for accessing remote virtual X desktops 
+  via a SunRay server, in the same way that a SunRay smart terminal can do.
+  It uses Sun ALP protocol, which is similar to RDP
+  and a good deal snappier than VNC.
+  Although it works well, Oracle consider this an obsolete product,
+  and Ubuntu 18.04 was the last release that had the gnome2 etc libraries
+  required to support it. So this is a self-contained snap package
+  that will run on any Linux distribution that supports snaps.
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: devmode # use 'strict' once you have the right plugs and slots
+
+parts:
+  snap-peek:
+    source: ./snap-peek.tar
+    plugin: dump
+    source-type: tar
+  
+  jre:
+    source: ./jre-7u6-linux-x64.tar.gz
+    plugin: dump
+    source-type: tar
+
+  ovdc:
+    # See 'snapcraft plugins'
+    source: ./ovdc_3.2.0-3_amd64.deb
+    plugin: dump
+    source-type: deb
+    organize: 
+      opt/ovdc/OVDC.jar : usr/share/java/OVDC.jar
+      opt/ovdc/libvdc.so : usr/lib
+    stage-packages: 
+      - libpulse0
+      - libgnome-keyring0
+
+  desktop-gtk2:
+    build-packages:
+      - build-essential
+      - libgtk2.0-dev
+    make-parameters:
+      - FLAVOR=gtk2
+    plugin: make
+    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
+    source-subdir: gtk
+    stage-packages: 
+      # Dependent packages required for ovdc to function,
+      # named as they would be in ubuntu 18.04.
+      - libxkbcommon0
+      - ttf-ubuntu-font-family
+      - dmz-cursor-theme
+      - light-themes
+      - adwaita-icon-theme
+      - gnome-themes-standard
+      - shared-mime-info
+      - libgtk2.0-0
+      - libgdk-pixbuf2.0-0
+      - libglib2.0-bin
+      - libgtk2.0-bin
+      - unity-gtk2-module
+      - locales-all
+      - libappindicator1
+      - xdg-user-dirs
+      - ibus-gtk
+      - libibus-1.0-5
+      - libasound2
+      - libgl1
+      - libxslt1.1
+      - libxtst6
+      - libxxf86vm1
+      - libavcodec57
+      - libavformat57
+
+apps: 
+  snap-peek:
+    command: snap-peek.sh
+  ovdc: 
+    command: usr/bin/ovdc
+    environment:
+      # Fallback to XWayland if running under Wayland
+      DISABLE_WAYLAND: 1

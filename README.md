@@ -86,9 +86,11 @@ I started with tutorial video "Snapcraft Live - A beginner's tutorial on buildin
 
 Building a snap requires the (snap) packages "snapcraft" and "multipass".
 
-The heart of a snap project is the snapcraft.yaml configuration file. It's sort-of like a powerful super-make configuration language. The tool that runs on it is the "snapcraft" command, which is like a super-make to generate the snap from it. Previous builds are cached, so it only rebuilds what it needs to.
+The heart of a snap project is the snapcraft.yaml configuration file. It's sort-of like a powerful super-make configuration language. The tool that runs on it is the `snapcraft` command, which is like a super-make to generate the snap from it. Previous builds are cached, so it only rebuilds what it needs to.
 
-"multipass" is used mostly under the bonnet to run the snap development environment as a virtual machine with a clean development environment with only the items spelled out in snapcraft.yaml in it.
+'multipass' is used mostly under the bonnet to run the snap development environment as a virtual machine with a clean development environment with only the items spelled out in snapcraft.yaml in it. The first time snapcraft is run, by default it will use `multipass` as build machine (there are other options), installing it if it's not already there.
+
+This is a good intro to the process in general: https://ubuntu.com/tutorials/create-your-first-snap .
 
 Since OVDC is java-based, I also referred to https://snapcraft.io/blog/building-a-java-snap-by-example .
 
@@ -98,24 +100,82 @@ This is also helpful: https://snapcraft.io/docs/environment-variables
 
 ## THE SECRET WORLD OF THE SNAP
 
-I've been having difficulty in figuring out why the different pieces of the ovdc snap can't see each other. I need to figure out what their full paths are, and these change depending on what little world we're running in. There are at least three:
-- The snapcraft environment, a virtual machine using something called
-"multipass" in which the building takes place. This world can be inspected from
-a shell if you run
+In the snap world, many things are completely invisible compared to what you are used to from the world of your normal command line and building things locally with your local toolchain, and others are in different places, and change depending on what little world we're in. There are at least three worlds:
+### The snapcraft environment
+This is typically a virtual machine (VM) using something called
+"multipass" in which the building takes place.
+This world can be inspected from a shell if you run
 ```
-    snapcraft --shell-after
+    snapcraft --shell-after # rebuilds as needed, then starts a local shell
 ```
-- The snap's local execution environment, which contains all the snap's internal
-installed pieces, and is what they see when a snap-provided command is running.
-For an installed snap, this can be inspected in a shell using a command like (in
-our case)
+For the `hello` test app, this gives you an idea:
+```
+snapcraft-hello # pwd
+/root
+snapcraft-hello # ls -F
+parts/  prime/  project/  snap/  stage/  state
+snapcraft-hello # mount | grep sdalley
+:/home/sdalley/mysnaps/hello on /root/project type fuse.sshfs (rw,nosuid,nodev,relatime,user_id=0,group_id=0,allow_other)
+snapcraft-hello # find project/ -ls
+        1      4 drwxrwxr-x   1 root     root           50 Jun  9 13:10 project/
+        4     96 -rw-r--r--   1 root     root        98304 Jun  9 18:36 project/hello_2.10_amd64.snap
+        2      4 drwxrwxr-x   1 root     root           28 Jun  9 12:30 project/snap
+        3      4 -rw-rw-r--   1 root     root          463 Jun  9 18:14 project/snap/snapcraft.yaml
+snapcraft-hello # ls -l
+total 24
+drwxr-xr-x 3 root root 4096 Jun  9 13:10 parts
+drwxr-xr-x 5 root root 4096 Jun  9 13:10 prime
+drwxrwxr-x 1 root root   50 Jun  9 13:10 project
+drwxr-xr-x 3 root root 4096 Jun  9 13:09 snap
+drwxr-xr-x 4 root root 4096 Jun  9 13:10 stage
+-rw-r--r-- 1 root root  363 Jun  9 18:36 state
+snapcraft-hello # cat state
+!GlobalState
+assets:
+  build-packages:
+  - autoconf=2.69-11
+  - automake=1:1.15.1-3ubuntu2
+  - autopoint=0.19.8.1-6ubuntu0.3
+  - autotools-dev=20180224.1
+  - file=1:5.32-2ubuntu0.4
+  - libmagic-mgc=1:5.32-2ubuntu0.4
+  - libmagic1=1:5.32-2ubuntu0.4
+  - libsigsegv2=2.12-1
+  - libtool=2.4.6-2
+  - m4=1.4.18-1
+  build-snaps:
+  - core18=2066
+  required-grade: stable
+snapcraft-hello # gcc --version
+gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0
+Copyright (C) 2017 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+snapcraft-hello # 
+```
+If you browse down from the top `/` directory you will see that there is a whole booted-up VM with a little distribution and build environment neatly packaged up. When snapcraft first runs, the VM is re-generated as needed from up-to-date upstream packages from the `base` platform, in this case `core18`, a subset of the Ubuntu 18.04 LTS platform.
+
+You are the root user in this world, and your home directory is `/root`.Note that your real-world current directory in which snapcraft is run gets mounted read-write under `/root/project/` in the snapcraft VM. Your `snapcraft.yaml` which specifies the whole thing therefore appears in `/root/project/snap/snapcraft.yaml`. 
+
+#### snapcraft steps
+Stop here and read https://snapcraft.io/docs/parts-lifecycle#heading--steps .
+Briefly, these are:
+- pull - unpacks the specified part(s) into the `parts/` subfolder from its specified `source`,
+- build - runs each part's specified `plugin` to create the installable items; these also appear under `parts/`, in various places, e.g. under `parts/\<part\>/build/`
+- stage - copies specified built items to staging area `stage/`
+- prime - ditto, but to priming area, contains only files needed in final snap,
+- snap - packages files in priming area into  `<name-version>.snap`. This file is left in `project/` (which is the current directory of your invoking shell). The snap system configuration metadata is put under `snap/`.
+
+### The snap's local execution environment
+This contains all the snap's internal installed pieces, and is what they see when a snap-provided command is running.
+For an installed snap, this can be inspected in a shell using a command like (in our case)
 ```
     snap run --shell ovdc
 ```
-This is set up with useful environment variables such as $SNAP and $HOME which
-are available to be used in internal shell scripts and such. See
+This is set up with useful environment variables such as $SNAP and $HOME which are available to be used in internal shell scripts and such. See
 https://snapcraft.io/docs/environment-variables for a full list.
 
-- The user environment, which is what the user sees of the snap contents when
-invoking a command or service provided by the snap. This is controlled by the
-"apps: " section in snapcraft.yaml.
+### The user environment
+This is what the user sees of the snap contents when
+invoking a command or service provided by the snap. This is controlled by the `apps: ` section in `snapcraft.yaml`.
