@@ -19,7 +19,8 @@ Supporting documentation for this release of **ovdc** is available on the [Oracl
 This page provides access to installation, configuration, and administration information for Oracle Virtual Desktop Client.
 
 # BUILD COMMANDS
-- Change to the top-level directory of the snap sources, e.g. `~/mysnaps/ovdc`
+- Clone the git repo at https://github.com/sdalley137/ovdc-snap
+- Change to the top-level directory of the snap sources, e.g. `~/mysnaps/ovdc-snap`
 - If you want a complete clean build, run `snapcraft clean`
 - Run `snapcraft` without extra arguments, which builds all the steps by default. The snap package will appear in the current directory, with a name like `ovdc_3.2.0-3-snap0.1_amd64.snap`
 - Install the snap package, with `sudo snap install --devmode ovdc_3.2.0-3-snap0.1_amd64.snap`

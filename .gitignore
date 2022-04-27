@@ -35,5 +35,8 @@ stage/
 # Source archive packed by `snapcraft cleanbuild` before pushing to the LXD container
 /*_source.tar.bz2
 
+# scratch stuff
+tmpdir/
+
 # EXCEPTIONS FOR ovdc
 !jre-7u6-linux-x64.tar.gz
