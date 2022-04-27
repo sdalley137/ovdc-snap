@@ -18,6 +18,12 @@ that will (should!) run on any Linux distribution that supports snaps.
 Supporting documentation for this release of **ovdc** is available on the [Oracle Virtual Desktop Client 3.2 Documentation page](https://docs.oracle.com/cd/E36351_01/index.html).
 This page provides access to installation, configuration, and administration information for Oracle Virtual Desktop Client.
 
+# BUILD COMMANDS
+- Change to the top-level directory of the snap sources, e.g. `~/mysnaps/ovdc`
+- If you want a complete clean build, run `snapcraft clean`
+- Run `snapcraft` without extra arguments, which builds all the steps by default. The snap package will appear in the current directory, with a name like `ovdc_3.2.0-3-snap0.1_amd64.snap`
+- Install the snap package, with `sudo snap install --devmode ovdc_3.2.0-3-snap0.1_amd64.snap`
+
 # NOTES ON CREATING THE OVDC SNAP
 
 The build takes place in a restricted environment which cannot see outside or above (in this case) `~/mysnaps/ovdc` , the current directory in which snapcraft is run. Since the process unpacks files from the .deb package, it needs to be copied to this directory.

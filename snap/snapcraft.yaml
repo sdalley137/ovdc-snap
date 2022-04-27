@@ -16,9 +16,9 @@ confinement: devmode # use 'strict' once you have the right plugs and slots
 
 parts:
   snap-peek:
-    source: ./snap-peek.tar
+    source: ./snap-peek
     plugin: dump
-    source-type: tar
+    source-type: local
   
   jre:
     source: ./jre-7u6-linux-x64.tar.gz
