@@ -6,7 +6,7 @@ description: |
   ovdc is Oracle's client for accessing remote virtual X desktops 
   via a SunRay server, in the same way that a SunRay smart terminal can do.
   It uses Sun ALP protocol, which is similar to RDP
-  and a good deal snappier than VNC.
+  and a good deal snappier (haha) than VNC.
   Although it works well, Oracle consider this an obsolete product,
   and Ubuntu 18.04 was the last release that had the gnome2 etc libraries
   required to support it. So this is a self-contained snap package
@@ -79,6 +79,8 @@ apps:
     command: snap-peek.sh
   ovdc: 
     command: usr/bin/ovdc
+    command-chain:
+      - bin/desktop-launch
     environment:
       # Fallback to XWayland if running under Wayland
       DISABLE_WAYLAND: 1
